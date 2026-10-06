@@ -11,6 +11,10 @@ const urlSchema = new mongoose.Schema(
             type: String,
             required: true,            
         },
+        isCustom: {
+            type: Boolean,
+            default: false
+        },
         expiresAt: {
             type: Date,
             default: null

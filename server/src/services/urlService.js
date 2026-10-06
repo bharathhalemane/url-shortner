@@ -1,36 +1,35 @@
-const crypto = require("crypto");
+const AppError = require('../utils/AppError');
 const Url = require('../models/Url');
+const {generateCode} = require('./idService');
 
-const ALPHABET =  'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-const SHORT_CODE_LENGTH = 7;
 const MAX_RETRIES = 5;
 
-const randomCode = () => {
-    const bytes = crypto.randomBytes(SHORT_CODE_LENGTH);
-    let out = '';
-    for (let i = 0; i < SHORT_CODE_LENGTH; i++) {
-        out += ALPHABET[bytes[i] % ALPHABET.length];    
-    }
-    return out;
-}
 
-const createShortURL = async (longUrl) => {
-    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+const createShortURL = async ({ longUrl, alias } ) => {
+    if(alias) {
         try{
             return await Url.create({
-                shortCode: randomCode(),
-                longUrl: longUrl
+                shortCode: alias, longUrl, isCustom: true
             });
-        }catch(err){
-            if (err.code === 11000) continue;
+        }catch(err) {
+            if (err.code === 11000) throw new AppError(409, 'Alias already taken');
             throw err;
         }
     }
-    throw new Error("Could not generate a unique short URL")
+
+    for (let attempt = 0; attempt < MAX_RETRIES; attempt++){
+        try{
+            return await Url.create({ shortCode: await generateCode(), longUrl });
+        }catch(err){
+            if ( err.code === 11000) continue;
+            throw err;
+        }
+    }
+    throw new AppError(500, 'Could not generate a unique short code')
 }
 
 const findByCode = async (shortCode) => {
-    return await Url.findOne({ shortCode });
+    return await Url.findOne({ shortCode }).lean();
 }
 
 module.exports = { createShortURL, findByCode };
