@@ -33,10 +33,16 @@ const redirect = async (req, res, next) => {
         const {code} = req.params;
         if (!CODE_REGEX.test(code)) return res.status(404).json({ error: "Short link not found" })
         
-        const doc = await urlService.findByCode(code);        
-        if (!doc) return res.status(404).json({ error: "Short link not found." })
-        if(doc.expiresAt && doc.expiresAt < new Date()) return res.status(410).json({error: "Short link expired."})
-        res.redirect(302, doc.longUrl)
+        const { record, source } = await urlService.resolve(code);
+        
+        res.set('X-Cache', source === 'cache' ? 'HIT' : 'MISS');
+
+        if(!record) return res.status(404).json({error: 'Short link not found'});
+        if(record.expiresAt && new Date(record.expiresAt) < new Date()) {
+            return res.status(410).json({ error: "Link expired" });
+        }
+
+        res.redirect(302, record.longUrl)
     } catch (err) {
         next(err)
     }
