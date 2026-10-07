@@ -17,7 +17,7 @@ const enrichClick = (event) => {
     const geo = ip ? geoip.lookup(ip) : null; 
 
     const ua = new UAParser(event.ua || '').getResult();
-    const device = BOT_REGEX.text(event.ua || '') ? 'bot' : ua.device.type || 'desktop';
+    const device = BOT_REGEX.test(event.ua || '') ? 'bot' : ua.device.type || 'desktop';
 
     return {
         eventId: event.eventId,

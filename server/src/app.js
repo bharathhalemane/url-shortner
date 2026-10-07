@@ -1,8 +1,11 @@
 const express = require('express');
 const urlRoutes = require('./routes/urlRoutes');
+const helmet = require('helmet')
 
 const app = express();
 const { trustProxy } = require('./config/env');
+
+app.use(helmet());
 app.set('trust proxy', trustProxy ? 1 : false);
 app.use(express.json({ limit: '10kb' }));
 

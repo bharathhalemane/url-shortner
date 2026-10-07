@@ -10,23 +10,26 @@ let end = 0;
 let refilling = null;
 
 const allocateBlock = async () => {
-    const run = () => {
-        Counter.findOneAndUpdate(
-            { _id: 'url' },
-            { $inc: { seq: BLOCK_SIZE } },
-            { returnDocument: "after", upsert: true }
-        );
-    }
+    const run = () =>
+    Counter.findOneAndUpdate(
+      { _id: 'url' },
+      { $inc: { seq: BLOCK_SIZE } },
+      { new: true, upsert: true } // new: true => return the document AFTER the increment
+    );
 
-    let doc;
-    try{
-        doc = await run();
-    } catch (err) {
-        if (err.code === 11000) doc = await run();
-        else throw err;
-    }
-    current = doc.seq - BLOCK_SIZE;
-    end = doc.seq;
+  let doc;
+  try {
+    doc = await run();
+  } catch (err) {
+    // Two instances upserting the first document at once -> one gets E11000. Retry.
+    if (err.code === 11000) doc = await run();
+    else throw err;
+  }
+
+  if (!doc) throw new Error('Counter allocation failed: no document returned');
+
+  current = doc.seq - BLOCK_SIZE;
+  end = doc.seq;
 }
 
 const nextId = async () => {

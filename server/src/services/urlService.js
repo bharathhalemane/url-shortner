@@ -5,33 +5,29 @@ const cache = require('./cacheService');
 
 const MAX_RETRIES = 5;
 
+async function createShortURL({ longUrl, alias, expiresAt }) {
+  let doc;
 
-const createShortURL = async ({ longUrl, alias }) => {
-    let doc;
-
-    if (alias) {
-        try {
-            doc = await Url.create({
-                shortCode: alias, longUrl, isCustom: true
-            });
-        } catch (err) {
-            if (err.code === 11000) throw new AppError(409, 'Alias already taken');
-            throw err;
-        }
-    } else {
-        for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
-            try {
-                doc = await Url.create({ shortCode: await generateCode(), longUrl });
-            } catch (err) {
-                if (err.code === 11000) continue;
-                throw err;
-            }
-        }
-        if(!doc) throw new AppError(500, 'Could not generate a unique short code')
+  if (alias) {
+    try {
+      doc = await Url.create({ shortCode: alias, longUrl, isCustom: true, expiresAt });
+    } catch (err) {
+      if (err.code === 11000) throw new AppError(409, 'Alias already taken');
+      throw err;
     }
+  } else {
+    for (let attempt = 0; attempt < MAX_RETRIES && !doc; attempt++) {
+      try {
+        doc = await Url.create({ shortCode: await generateCode(), longUrl, expiresAt });
+      } catch (err) {
+        if (err.code !== 11000) throw err;
+      }
+    }
+    if (!doc) throw new AppError(500, 'Could not generate a unique short code');
+  }
 
-    await cache.set(doc.shortCode, doc);
-    return doc;
+  await cache.set(doc.shortCode, doc); // cacheService already caps the TTL at the link's expiry
+  return doc;
 }
 
 const inflight = new Map();

@@ -1,122 +1,72 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+import { useState } from 'react';
+import { Link2 } from 'lucide-react';
+import CreateLinkCard from './components/CreateLinkCard';
+import LinkList from './components/LinkList';
+import AnalyticsPanel from './components/AnalyticsPanel';
+import { useMyLinks } from './hooks/useMyLinks';
+import { useAnalytics } from './hooks/useAnalytics';
+import { fetchAnalytics } from './api';
 
-function App() {
-  const [count, setCount] = useState(0)
+const SHORT_BASE = import.meta.env.VITE_SHORT_BASE_URL || 'http://localhost:3000';
+
+export default function App() {
+  const { links, add, remove } = useMyLinks();
+  const [active, setActive] = useState(() => links[0]?.shortCode ?? null);
+  const [rangeKey, setRangeKey] = useState('7d');
+  const [includeBots, setIncludeBots] = useState(false);
+  const [autoRefresh, setAutoRefresh] = useState(true);
+
+  const link = links.find((l) => l.shortCode === active) || null;
+  const { data, loading, error, refresh } = useAnalytics(link?.shortCode ?? null, {
+    rangeKey, includeBots, autoRefresh,
+  });
+
+  const handleCreated = (l) => {
+    add(l);
+    setActive(l.shortCode);
+  };
+
+  const handleRemove = (code) => {
+    remove(code);
+    if (code === active) setActive(links.find((l) => l.shortCode !== code)?.shortCode ?? null);
+  };
+
+  // Validate by asking the API (404 => "Short link not found"), then remember it
+  const handleTrack = async (code) => {
+    const to = new Date();
+    await fetchAnalytics(code, { from: new Date(to - 864e5), to, interval: 'day', includeBots: false });
+    add({ shortCode: code, shortUrl: `${SHORT_BASE}/${code}`, longUrl: '' });
+    setActive(code);
+  };
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
+    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <header className="mb-8 flex items-center gap-3">
+        <div className="grid h-10 w-10 place-items-center rounded-xl bg-linear-to-br from-indigo-500 to-fuchsia-500 shadow-lg shadow-indigo-500/30">
+          <Link2 className="h-5 w-5 text-white" />
         </div>
         <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
+          <h1 className="text-xl font-semibold tracking-tight text-white">Linkpulse</h1>
+          <p className="text-xs text-slate-500">Short links with live analytics</p>
         </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+      </header>
 
-      <div className="ticks"></div>
+      <div className="grid gap-6 lg:grid-cols-12">
+        <aside className="space-y-6 lg:col-span-4">
+          <CreateLinkCard onCreated={handleCreated} />
+          <LinkList links={links} activeCode={active} onSelect={setActive} onRemove={handleRemove} onTrack={handleTrack} />
+        </aside>
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+        <main className="lg:col-span-8">
+          <AnalyticsPanel
+            link={link}
+            rangeKey={rangeKey} onRangeChange={setRangeKey}
+            includeBots={includeBots} onBotsChange={setIncludeBots}
+            autoRefresh={autoRefresh} onAutoRefreshChange={setAutoRefresh}
+            data={data} loading={loading} error={error} onRefresh={refresh}
+          />
+        </main>
+      </div>
+    </div>
+  );
 }
-
-export default App
