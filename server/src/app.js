@@ -2,6 +2,8 @@ const express = require('express');
 const urlRoutes = require('./routes/urlRoutes');
 
 const app = express();
+const { trustProxy } = require('./config/env');
+app.set('trust proxy', trustProxy ? 1 : false);
 app.use(express.json({ limit: '10kb' }));
 
 app.get('/health', (req, res) => res.json({ ok: true }));

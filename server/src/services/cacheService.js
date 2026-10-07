@@ -56,4 +56,23 @@ const del = async (code) => {
     }
 }
 
-module.exports = { get, set, setNotFound, del };
+const getJSON = async(k) => {
+    if(!cacheEnabled) return undefined
+    try{
+        const v = await redis.get(k);
+        return v === null ? undefined : JSON.parse(v);        
+    }catch{
+        return undefined;
+    }
+}
+
+const setJSON = async(k, value, ttlSeconds) => {
+    if(!cacheEnabled) return
+    try{
+        await redis.set(k, JSON.stringify(value), 'EX', ttlSeconds);
+    }catch{
+        return undefined;
+    }
+}
+
+module.exports = { get, set, setNotFound, del, getJSON, setJSON };
