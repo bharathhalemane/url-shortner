@@ -1,0 +1,26 @@
+{
+  "label": "1-no-cache-a",
+  "startedAt": "2026-10-07T07:44:29.107Z",
+  "valid": true,
+  "connections": 100,
+  "durationSec": 30,
+  "targetRate": null,
+  "zipfS": 1,
+  "links": 10000,
+  "reqPerSec": 130,
+  "latencyMs": {
+    "p50": 131,
+    "p90": 2527,
+    "p99": 3220,
+    "max": 6590
+  },
+  "cacheHitRatio": null,
+  "statusCodes": {
+    "302": {
+      "count": 3895
+    }
+  },
+  "errors": 0,
+  "timeouts": 0,
+  "expectedClicks": 4253
+}

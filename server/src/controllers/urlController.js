@@ -6,6 +6,9 @@ const urlService = require('../services/urlService')
 const crypto = require('crypto')
 const {enqueueClick} = require('../queues/clickQueue')
 const parseExpiry = require('../utils/parseExpiry');
+const Click = require('../models/Click');
+const enrichClick = require('../utils/enrichClick');
+const { clickMode } = require('../config/env');
 const CODE_REGEX = /^[A-Za-z0-9_-]{1,30}$/;
 
 const create=async (req, res, next) => {
@@ -43,15 +46,21 @@ const redirect = async (req, res, next) => {
             return res.status(410).json({ error: "Link expired" });
         }
 
-        if (req.method === 'GET') {
-            enqueueClick({
+        if (req.method === 'GET' && clickMode !== 'off') {
+            const event = {
                 eventId: crypto.randomUUID(),
                 shortCode: code,
                 ts: Date.now(),
                 ip: req.ip,
                 ua: req.get('user-agent') || '',
                 ref: req.get('referer') || '',
-            })
+            };
+            if (clickMode === 'sync') {
+                // BENCHMARK ONLY: the naive design we're proving is worse. Never the default.
+                await Click.create(enrichClick(event));
+            } else {
+                enqueueClick(event); // production path: fire-and-forget
+            }
         }
 
         res.redirect(302, record.longUrl)

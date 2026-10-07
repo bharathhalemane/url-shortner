@@ -20,4 +20,5 @@ module.exports = {
     .split(',')
     .map((s) => s.trim().toLowerCase())
     .filter(Boolean),
+  clickMode: process.env.CLICK_MODE || 'queue', // 'queue' | 'sync' (benchmark only) | 'off'
 };

@@ -10,7 +10,9 @@
     "start": "node src/server.js",
     "worker": "node src/workers/clickWorker.js",
     "dev:worker": "nodemon src/workers/clickWorker.js",
-    "seed": "node scripts/seedClicks.js"
+    "seed": "node scripts/seedClicks.js",
+    "seed:lt": "node loadtest/seed.js",
+    "loadtest": "node loadtest/run.js"
   },
   "keywords": [],
   "author": "",
@@ -27,6 +29,7 @@
     "ua-parser-js": "^1.0.41"
   },
   "devDependencies": {
+    "autocannon": "^8.0.0",
     "nodemon": "^3.1.14"
   }
 }
