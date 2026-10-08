@@ -4,14 +4,17 @@ import { Download, X } from 'lucide-react';
 const btn =
   'inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-sm font-medium text-slate-200 transition hover:bg-white/10';
 
+
+
 export default function QrDialog({ link, onClose }) {
+  
   useEffect(() => {
     const onKey = (e) => e.key === 'Escape' && onClose();
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
 
-  const base = `/api/urls/${encodeURIComponent(link.shortCode)}/qr`;
+  const base = `${import.meta.env.VITE_API_URL || ''}/api/urls/${encodeURIComponent(link.shortCode)}/qr`;
 
   return (
     <div

@@ -22,9 +22,9 @@ const insertClicks = async (docs) => {
     }
 }
 
-(async () => {
-    await connectDB();
-    const batcher = new Batcher(insertClicks, clickBatchSize, clickFlushMs)
+const startWorker = async ({connect= true} = {}) => {
+    if (connect) await connectDB();
+    const batcher = new Batcher(insertClicks, clickBatchSize, clickFlushMs);
 
     const worker = new Worker(
         QUEUE_NAME,
@@ -32,20 +32,26 @@ const insertClicks = async (docs) => {
             await batcher.add(enrichClick(job.data));
         },
         {
-            connection: new IORedis(queueRedisUrl, { maxRetriesPerRequest: null }),
+            connection: new IORedis(queueRedisUrl, { maxRetriesPerRequest: null, family: 0 }),
             concurrency: clickBatchSize,
         }
-    )
-
+    );
     worker.on('failed', (job, err) => console.error(`[worker] job ${job?.id} failed:`, err.message));
     worker.on('error', (err) => console.error('[worker] error:', err.message));
-    console.log('Click worker running')
+    return worker;
+}
 
-    const shutdown = async () => {
-        await worker.close();
-        await mongoose.disconnect();
-        process.exit(0);
-    }
-    process.on('SIGTERM', shutdown);
-    process.on('SIGINT', shutdown)
-})();
+module.exports = {startWorker}
+
+if(require.main === module){
+    startWorker().then((worker) => {
+        console.log('Click worker running');
+        const shutdown = async () => {
+            await worker.close();
+            await mongoose.disconnect();
+            process.exit(0);            
+        };
+        process.on('SIGTERM',shutdown);
+        process.on('SIGINT', shutdown);
+    })
+}

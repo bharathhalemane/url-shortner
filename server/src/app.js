@@ -1,15 +1,19 @@
 const express = require('express');
 const urlRoutes = require('./routes/urlRoutes');
 const helmet = require('helmet')
+const cors = require('cors')
 
 const app = express();
 const { trustProxy } = require('./config/env');
 
-app.use(helmet());
-app.set('trust proxy', trustProxy ? 1 : false);
+
+app.use(helmet({crossOriginResourcePolicy: {policy: 'cross-origin'}}));
+app.set('trust proxy', trustProxy);
+app.use(cors({origin: process.env.FRONTEND_ORIGIN || false, methods: ['GET', 'POST']}))
 app.use(express.json({ limit: '10kb' }));
 
 app.get('/health', (req, res) => res.json({ ok: true }));
+app.get('/debug-ip', (req, res) => res.json({ip: req.ip, ips: req.ips, xff: req.get('x-forwarded-for')}))
 app.use(urlRoutes);
 
 app.use((err, req, res, next) => {
