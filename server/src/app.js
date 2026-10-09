@@ -13,7 +13,7 @@ const allowedOrigins = (process.env.FRONTEND_ORIGIN || '')
 app.use(helmet({crossOriginResourcePolicy: {policy: 'cross-origin'}}));
 app.set('trust proxy', trustProxy);
 app.use(cors({origin: allowedOrigins.length ? allowedOrigins : false,
-  methods: ['GET', 'POST']}))
+  methods: ['GET', 'POST'],}))
 app.use(express.json({ limit: '10kb' }));
 
 app.get('/health', (req, res) => res.json({ ok: true }));

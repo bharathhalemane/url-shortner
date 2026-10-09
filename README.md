@@ -1,3 +1,5 @@
+<p align="center"><img src="docs/icon-192.png" width="96" alt="Linkpulse logo"></p>
+
 # Linkpulse: Scalable URL Shortener with Analytics
 
 A URL shortener built to stay fast and correct under heavy read load, with per-link click analytics and a live dashboard.
