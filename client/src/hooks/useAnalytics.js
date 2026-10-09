@@ -17,7 +17,7 @@ export function useAnalytics(code, { rangeKey, includeBots, autoRefresh }) {
     const from = new Date(to.getTime() - ms);
 
     // Keep old data while refreshing the same link; drop it when the link changes
-    setState((s) => ({ ...s, data: s.forCode === code ? s.data : null, loading: true, error: '' }));
+    // setState((s) => ({ ...s, data: s.forCode === code ? s.data : null, loading: true, error: '' }));
 
     fetchAnalytics(code, { from, to, interval, includeBots }, ctrl.signal)
       .then((data) => setState({ forCode: code, data, loading: false, error: '' }))
@@ -34,6 +34,6 @@ export function useAnalytics(code, { rangeKey, includeBots, autoRefresh }) {
     const id = setInterval(() => setTick((t) => t + 1), REFRESH_MS);
     return () => clearInterval(id);
   }, [autoRefresh]);
-
+  
   return { data: state.forCode === code ? state.data : null, loading: state.loading, error: state.error, refresh };
 }

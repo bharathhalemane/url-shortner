@@ -33,8 +33,9 @@ export default function CreateLinkCard({ onCreated }) {
       const link = await createLink({
         longUrl: longUrl.trim(),
         ...(alias.trim() && { alias: alias.trim() }),
-        ...(expiresIn && { expiresI: Number(expiresIn)})
+        ...(expiresIn && { expiresIn: Number(expiresIn)})
       });
+      console.log(link)
       setResult(link);
       onCreated(link);
       setLongUrl('');
